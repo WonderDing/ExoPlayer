@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 dependencies {
     implementation project(modulePrefix + 'library-common')
@@ -26,6 +27,8 @@ dependencies {
     // Since OkHttp is distributed as a jar rather than an aar, Gradle won't
     // stop us from making this mistake!
     api 'com.squareup.okhttp3:okhttp:3.12.11'
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
@@ -38,3 +41,6 @@ ext {
     releaseDescription = 'OkHttp extension for ExoPlayer.'
 }
 apply from: '../../publish.gradle'
+repositories {
+    mavenCentral()
+}

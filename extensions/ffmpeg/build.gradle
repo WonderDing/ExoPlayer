@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 // Configure the native build only if ffmpeg is present to avoid gradle sync
 // failures if ffmpeg hasn't been built according to the README instructions.
@@ -27,9 +28,14 @@ dependencies {
     compileOnly 'org.jetbrains.kotlin:kotlin-annotations-jvm:' + kotlinAnnotationsVersion
     testImplementation project(modulePrefix + 'testutils')
     testImplementation 'org.robolectric:robolectric:' + robolectricVersion
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
     javadocTitle = 'FFmpeg extension'
 }
 apply from: '../../javadoc_library.gradle'
+repositories {
+    mavenCentral()
+}

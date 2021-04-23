@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 android.defaultConfig.minSdkVersion 19
 
@@ -22,6 +23,8 @@ dependencies {
     api 'com.google.vr:sdk-base:1.190.0'
     compileOnly 'org.checkerframework:checker-qual:' + checkerframeworkVersion
     compileOnly 'org.jetbrains.kotlin:kotlin-annotations-jvm:' + kotlinAnnotationsVersion
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
@@ -34,3 +37,6 @@ ext {
     releaseDescription = 'Google VR extension for ExoPlayer.'
 }
 apply from: '../../publish.gradle'
+repositories {
+    mavenCentral()
+}

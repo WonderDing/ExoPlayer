@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 dependencies {
     api project(modulePrefix + 'library-core')
@@ -20,6 +21,8 @@ dependencies {
     api project(modulePrefix + 'library-smoothstreaming')
     api project(modulePrefix + 'library-transformer')
     api project(modulePrefix + 'library-ui')
+    implementation "androidx.core:core-ktx:1.2.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
@@ -27,3 +30,6 @@ ext {
     releaseDescription = 'The ExoPlayer library (all modules).'
 }
 apply from: '../../publish.gradle'
+repositories {
+    mavenCentral()
+}

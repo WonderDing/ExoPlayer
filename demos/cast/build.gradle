@@ -13,6 +13,7 @@
 // limitations under the License.
 apply from: '../../constants.gradle'
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion project.ext.compileSdkVersion
@@ -62,6 +63,11 @@ dependencies {
     implementation 'androidx.multidex:multidex:' + androidxMultidexVersion
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.google.android.material:material:1.2.1'
+    implementation "androidx.core:core-ktx:1.2.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 apply plugin: 'com.google.android.gms.strict-version-matcher-plugin'
+repositories {
+    mavenCentral()
+}

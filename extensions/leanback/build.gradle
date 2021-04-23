@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 android.defaultConfig.minSdkVersion 17
 
@@ -20,6 +21,8 @@ dependencies {
     implementation 'androidx.annotation:annotation:' + androidxAnnotationVersion
     implementation 'androidx.leanback:leanback:1.0.0'
     compileOnly 'org.jetbrains.kotlin:kotlin-annotations-jvm:' + kotlinAnnotationsVersion
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
@@ -32,3 +35,6 @@ ext {
     releaseDescription = 'Leanback extension for ExoPlayer.'
 }
 apply from: '../../publish.gradle'
+repositories {
+    mavenCentral()
+}

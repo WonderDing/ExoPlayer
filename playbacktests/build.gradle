@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 android {
     defaultConfig {
@@ -27,4 +28,9 @@ dependencies {
     androidTestImplementation project(modulePrefix + 'library-dash')
     androidTestImplementation project(modulePrefix + 'library-hls')
     androidTestImplementation project(modulePrefix + 'testutils')
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+repositories {
+    mavenCentral()
 }

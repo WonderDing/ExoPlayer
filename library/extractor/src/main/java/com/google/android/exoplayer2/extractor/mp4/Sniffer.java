@@ -147,7 +147,9 @@ import java.io.IOException;
         return false;
       }
       bytesSearched += headerSize;
+      if (atomType == Atom.TYPE_ivfh){
 
+      }
       if (atomType == Atom.TYPE_moov) {
         // We have seen the moov atom. We increase the search size to make sure we don't miss an
         // mvex atom because the moov's size exceeds the search length.

@@ -27,7 +27,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.Map;
 
-/** Defines common file type constants and helper methods. */
+/**
+ * Defines common file type constants and helper methods.
+ */
 public final class FileTypes {
 
   /**
@@ -38,41 +40,80 @@ public final class FileTypes {
   @Documented
   @Retention(RetentionPolicy.SOURCE)
   @IntDef({
-    UNKNOWN, AC3, AC4, ADTS, AMR, FLAC, FLV, MATROSKA, MP3, MP4, OGG, PS, TS, WAV, WEBVTT, JPEG
+      UNKNOWN, AC3, AC4, ADTS, AMR, FLAC, FLV, MATROSKA, MP3, MP4, OGG, PS, TS, WAV, WEBVTT, JPEG, IVF
   })
-  public @interface Type {}
-  /** Unknown file type. */
+  public @interface Type {
+
+  }
+
+  /**
+   * Unknown file type.
+   */
   public static final int UNKNOWN = -1;
-  /** File type for the AC-3 and E-AC-3 formats. */
+  /**
+   * File type for the AC-3 and E-AC-3 formats.
+   */
   public static final int AC3 = 0;
-  /** File type for the AC-4 format. */
+  /**
+   * File type for the AC-4 format.
+   */
   public static final int AC4 = 1;
-  /** File type for the ADTS format. */
+  /**
+   * File type for the ADTS format.
+   */
   public static final int ADTS = 2;
-  /** File type for the AMR format. */
+  /**
+   * File type for the AMR format.
+   */
   public static final int AMR = 3;
-  /** File type for the FLAC format. */
+  /**
+   * File type for the FLAC format.
+   */
   public static final int FLAC = 4;
-  /** File type for the FLV format. */
+  /**
+   * File type for the FLV format.
+   */
   public static final int FLV = 5;
-  /** File type for the Matroska and WebM formats. */
+  /**
+   * File type for the Matroska and WebM formats.
+   */
   public static final int MATROSKA = 6;
-  /** File type for the MP3 format. */
+  /**
+   * File type for the MP3 format.
+   */
   public static final int MP3 = 7;
-  /** File type for the MP4 format. */
+  /**
+   * File type for the MP4 format.
+   */
   public static final int MP4 = 8;
-  /** File type for the Ogg format. */
+  /**
+   * File type for the Ogg format.
+   */
   public static final int OGG = 9;
-  /** File type for the MPEG-PS format. */
+  /**
+   * File type for the MPEG-PS format.
+   */
   public static final int PS = 10;
-  /** File type for the MPEG-TS format. */
+  /**
+   * File type for the MPEG-TS format.
+   */
   public static final int TS = 11;
-  /** File type for the WAV format. */
+  /**
+   * File type for the WAV format.
+   */
   public static final int WAV = 12;
-  /** File type for the WebVTT format. */
+  /**
+   * File type for the WebVTT format.
+   */
   public static final int WEBVTT = 13;
-  /** File type for the JPEG format. */
+  /**
+   * File type for the JPEG format.
+   */
   public static final int JPEG = 14;
+  /**
+   * File type for the IVF format.
+   */
+  public static final int IVF = 15;
 
   @VisibleForTesting /* package */ static final String HEADER_CONTENT_TYPE = "Content-Type";
 
@@ -105,10 +146,14 @@ public final class FileTypes {
   private static final String EXTENSION_WEBVTT = ".webvtt";
   private static final String EXTENSION_JPG = ".jpg";
   private static final String EXTENSION_JPEG = ".jpeg";
+  private static final String EXTENSION_IVF = ".ivf";
 
-  private FileTypes() {}
+  private FileTypes() {
+  }
 
-  /** Returns the {@link Type} corresponding to the response headers provided. */
+  /**
+   * Returns the {@link Type} corresponding to the response headers provided.
+   */
   @FileTypes.Type
   public static int inferFileTypeFromResponseHeaders(Map<String, List<String>> responseHeaders) {
     @Nullable List<String> contentTypes = responseHeaders.get(HEADER_CONTENT_TYPE);
@@ -172,7 +217,9 @@ public final class FileTypes {
     }
   }
 
-  /** Returns the {@link Type} corresponding to the {@link Uri} provided. */
+  /**
+   * Returns the {@link Type} corresponding to the {@link Uri} provided.
+   */
   @FileTypes.Type
   public static int inferFileTypeFromUri(Uri uri) {
     @Nullable String filename = uri.getLastPathSegment();
@@ -191,26 +238,28 @@ public final class FileTypes {
     } else if (filename.endsWith(EXTENSION_FLV)) {
       return FileTypes.FLV;
     } else if (filename.startsWith(
-            EXTENSION_PREFIX_MK,
-            /* toffset= */ filename.length() - (EXTENSION_PREFIX_MK.length() + 1))
+        EXTENSION_PREFIX_MK,
+        /* toffset= */ filename.length() - (EXTENSION_PREFIX_MK.length() + 1))
         || filename.endsWith(EXTENSION_WEBM)) {
       return FileTypes.MATROSKA;
     } else if (filename.endsWith(EXTENSION_MP3)) {
       return FileTypes.MP3;
     } else if (filename.endsWith(EXTENSION_MP4)
         || filename.startsWith(
-            EXTENSION_PREFIX_M4,
-            /* toffset= */ filename.length() - (EXTENSION_PREFIX_M4.length() + 1))
+        EXTENSION_PREFIX_M4,
+        /* toffset= */ filename.length() - (EXTENSION_PREFIX_M4.length() + 1))
         || filename.startsWith(
-            EXTENSION_PREFIX_MP4,
-            /* toffset= */ filename.length() - (EXTENSION_PREFIX_MP4.length() + 1))
+        EXTENSION_PREFIX_MP4,
+        /* toffset= */ filename.length() - (EXTENSION_PREFIX_MP4.length() + 1))
         || filename.startsWith(
-            EXTENSION_PREFIX_CMF,
-            /* toffset= */ filename.length() - (EXTENSION_PREFIX_CMF.length() + 1))) {
+        EXTENSION_PREFIX_CMF,
+        /* toffset= */ filename.length() - (EXTENSION_PREFIX_CMF.length() + 1))) {
       return FileTypes.MP4;
+    } else if (filename.contains(EXTENSION_IVF)) {
+      return FileTypes.IVF;
     } else if (filename.startsWith(
-            EXTENSION_PREFIX_OG,
-            /* toffset= */ filename.length() - (EXTENSION_PREFIX_OG.length() + 1))
+        EXTENSION_PREFIX_OG,
+        /* toffset= */ filename.length() - (EXTENSION_PREFIX_OG.length() + 1))
         || filename.endsWith(EXTENSION_OPUS)) {
       return FileTypes.OGG;
     } else if (filename.endsWith(EXTENSION_PS)
@@ -220,8 +269,8 @@ public final class FileTypes {
       return FileTypes.PS;
     } else if (filename.endsWith(EXTENSION_TS)
         || filename.startsWith(
-            EXTENSION_PREFIX_TS,
-            /* toffset= */ filename.length() - (EXTENSION_PREFIX_TS.length() + 1))) {
+        EXTENSION_PREFIX_TS,
+        /* toffset= */ filename.length() - (EXTENSION_PREFIX_TS.length() + 1))) {
       return FileTypes.TS;
     } else if (filename.endsWith(EXTENSION_WAV) || filename.endsWith(EXTENSION_WAVE)) {
       return FileTypes.WAV;

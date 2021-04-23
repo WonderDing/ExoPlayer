@@ -27,6 +27,7 @@ import com.google.android.exoplayer2.extractor.jpeg.JpegExtractor;
 import com.google.android.exoplayer2.extractor.mkv.MatroskaExtractor;
 import com.google.android.exoplayer2.extractor.mp3.Mp3Extractor;
 import com.google.android.exoplayer2.extractor.mp4.FragmentedMp4Extractor;
+import com.google.android.exoplayer2.extractor.mp4.IvfExtractor;
 import com.google.android.exoplayer2.extractor.mp4.Mp4Extractor;
 import com.google.android.exoplayer2.extractor.ogg.OggExtractor;
 import com.google.android.exoplayer2.extractor.ts.Ac3Extractor;
@@ -80,21 +81,21 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   // The JPEG extractor appears after audio/video extractors because we expect audio/video input to
   // be more common.
   private static final int[] DEFAULT_EXTRACTOR_ORDER =
-      new int[] {
-        FileTypes.FLV,
-        FileTypes.FLAC,
-        FileTypes.WAV,
-        FileTypes.MP4,
-        FileTypes.AMR,
-        FileTypes.PS,
-        FileTypes.OGG,
-        FileTypes.TS,
-        FileTypes.MATROSKA,
-        FileTypes.ADTS,
-        FileTypes.AC3,
-        FileTypes.AC4,
-        FileTypes.MP3,
-        FileTypes.JPEG,
+      new int[]{
+          FileTypes.FLV,
+          FileTypes.FLAC,
+          FileTypes.WAV,
+          FileTypes.MP4,
+          FileTypes.AMR,
+          FileTypes.PS,
+          FileTypes.OGG,
+          FileTypes.TS,
+          FileTypes.MATROSKA,
+          FileTypes.ADTS,
+          FileTypes.AC3,
+          FileTypes.AC4,
+          FileTypes.MP3,
+          FileTypes.JPEG,
       };
 
   @Nullable
@@ -127,15 +128,26 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   }
 
   private boolean constantBitrateSeekingEnabled;
-  @AdtsExtractor.Flags private int adtsFlags;
-  @AmrExtractor.Flags private int amrFlags;
-  @FlacExtractor.Flags private int flacFlags;
-  @MatroskaExtractor.Flags private int matroskaFlags;
-  @Mp4Extractor.Flags private int mp4Flags;
-  @FragmentedMp4Extractor.Flags private int fragmentedMp4Flags;
-  @Mp3Extractor.Flags private int mp3Flags;
-  @TsExtractor.Mode private int tsMode;
-  @DefaultTsPayloadReaderFactory.Flags private int tsFlags;
+  @AdtsExtractor.Flags
+  private int adtsFlags;
+  @AmrExtractor.Flags
+  private int amrFlags;
+  @FlacExtractor.Flags
+  private int flacFlags;
+  @MatroskaExtractor.Flags
+  private int matroskaFlags;
+  @Mp4Extractor.Flags
+  private int mp4Flags;
+  @FragmentedMp4Extractor.Flags
+  private int fragmentedMp4Flags;
+  @IvfExtractor.Flags
+  private int ivfFlags;
+  @Mp3Extractor.Flags
+  private int mp3Flags;
+  @TsExtractor.Mode
+  private int tsMode;
+  @DefaultTsPayloadReaderFactory.Flags
+  private int tsFlags;
   private int tsTimestampSearchBytes;
 
   public DefaultExtractorsFactory() {
@@ -151,7 +163,7 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
    * modification.
    *
    * @param constantBitrateSeekingEnabled Whether approximate seeking using a constant bitrate
-   *     assumption should be enabled for all extractors that support it.
+   *                                      assumption should be enabled for all extractors that support it.
    * @return The factory, for convenience.
    */
   public synchronized DefaultExtractorsFactory setConstantBitrateSeekingEnabled(
@@ -163,9 +175,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   /**
    * Sets flags for {@link AdtsExtractor} instances created by the factory.
    *
-   * @see AdtsExtractor#AdtsExtractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see AdtsExtractor#AdtsExtractor(int)
    */
   public synchronized DefaultExtractorsFactory setAdtsExtractorFlags(
       @AdtsExtractor.Flags int flags) {
@@ -176,9 +188,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   /**
    * Sets flags for {@link AmrExtractor} instances created by the factory.
    *
-   * @see AmrExtractor#AmrExtractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see AmrExtractor#AmrExtractor(int)
    */
   public synchronized DefaultExtractorsFactory setAmrExtractorFlags(@AmrExtractor.Flags int flags) {
     this.amrFlags = flags;
@@ -190,9 +202,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
    * by {@code com.google.android.exoplayer2.ext.flac.FlacExtractor} instances if the FLAC extension
    * is being used.
    *
-   * @see FlacExtractor#FlacExtractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see FlacExtractor#FlacExtractor(int)
    */
   public synchronized DefaultExtractorsFactory setFlacExtractorFlags(
       @FlacExtractor.Flags int flags) {
@@ -203,9 +215,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   /**
    * Sets flags for {@link MatroskaExtractor} instances created by the factory.
    *
-   * @see MatroskaExtractor#MatroskaExtractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see MatroskaExtractor#MatroskaExtractor(int)
    */
   public synchronized DefaultExtractorsFactory setMatroskaExtractorFlags(
       @MatroskaExtractor.Flags int flags) {
@@ -216,9 +228,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   /**
    * Sets flags for {@link Mp4Extractor} instances created by the factory.
    *
-   * @see Mp4Extractor#Mp4Extractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see Mp4Extractor#Mp4Extractor(int)
    */
   public synchronized DefaultExtractorsFactory setMp4ExtractorFlags(@Mp4Extractor.Flags int flags) {
     this.mp4Flags = flags;
@@ -228,9 +240,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   /**
    * Sets flags for {@link FragmentedMp4Extractor} instances created by the factory.
    *
-   * @see FragmentedMp4Extractor#FragmentedMp4Extractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see FragmentedMp4Extractor#FragmentedMp4Extractor(int)
    */
   public synchronized DefaultExtractorsFactory setFragmentedMp4ExtractorFlags(
       @FragmentedMp4Extractor.Flags int flags) {
@@ -241,9 +253,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   /**
    * Sets flags for {@link Mp3Extractor} instances created by the factory.
    *
-   * @see Mp3Extractor#Mp3Extractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see Mp3Extractor#Mp3Extractor(int)
    */
   public synchronized DefaultExtractorsFactory setMp3ExtractorFlags(@Mp3Extractor.Flags int flags) {
     mp3Flags = flags;
@@ -253,9 +265,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
   /**
    * Sets the mode for {@link TsExtractor} instances created by the factory.
    *
-   * @see TsExtractor#TsExtractor(int, TimestampAdjuster, TsPayloadReader.Factory, int)
    * @param mode The mode to use.
    * @return The factory, for convenience.
+   * @see TsExtractor#TsExtractor(int, TimestampAdjuster, TsPayloadReader.Factory, int)
    */
   public synchronized DefaultExtractorsFactory setTsExtractorMode(@TsExtractor.Mode int mode) {
     tsMode = mode;
@@ -266,9 +278,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
    * Sets flags for {@link DefaultTsPayloadReaderFactory}s used by {@link TsExtractor} instances
    * created by the factory.
    *
-   * @see TsExtractor#TsExtractor(int)
    * @param flags The flags to use.
    * @return The factory, for convenience.
+   * @see TsExtractor#TsExtractor(int)
    */
   public synchronized DefaultExtractorsFactory setTsExtractorFlags(
       @DefaultTsPayloadReaderFactory.Flags int flags) {
@@ -280,9 +292,9 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
    * Sets the number of bytes searched to find a timestamp for {@link TsExtractor} instances created
    * by the factory.
    *
-   * @see TsExtractor#TsExtractor(int, TimestampAdjuster, TsPayloadReader.Factory, int)
    * @param timestampSearchBytes The number of search bytes to use.
    * @return The factory, for convenience.
+   * @see TsExtractor#TsExtractor(int, TimestampAdjuster, TsPayloadReader.Factory, int)
    */
   public synchronized DefaultExtractorsFactory setTsExtractorTimestampSearchBytes(
       int timestampSearchBytes) {
@@ -334,16 +346,16 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
             new AdtsExtractor(
                 adtsFlags
                     | (constantBitrateSeekingEnabled
-                        ? AdtsExtractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING
-                        : 0)));
+                    ? AdtsExtractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING
+                    : 0)));
         break;
       case FileTypes.AMR:
         extractors.add(
             new AmrExtractor(
                 amrFlags
                     | (constantBitrateSeekingEnabled
-                        ? AmrExtractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING
-                        : 0)));
+                    ? AmrExtractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING
+                    : 0)));
         break;
       case FileTypes.FLAC:
         if (FLAC_EXTENSION_EXTRACTOR_CONSTRUCTOR != null) {
@@ -368,12 +380,15 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
             new Mp3Extractor(
                 mp3Flags
                     | (constantBitrateSeekingEnabled
-                        ? Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING
-                        : 0)));
+                    ? Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING
+                    : 0)));
         break;
       case FileTypes.MP4:
         extractors.add(new FragmentedMp4Extractor(fragmentedMp4Flags));
         extractors.add(new Mp4Extractor(mp4Flags));
+        break;
+      case FileTypes.IVF:
+        extractors.add(new IvfExtractor(ivfFlags));
         break;
       case FileTypes.OGG:
         extractors.add(new OggExtractor());

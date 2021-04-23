@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 android.defaultConfig.minSdkVersion 19
 
@@ -28,6 +29,8 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:' + androidxTestRunnerVersion
     androidTestImplementation 'androidx.test:rules:' + androidxTestRulesVersion
     androidTestImplementation 'com.google.truth:truth:' + truthVersion
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
@@ -40,3 +43,6 @@ ext {
     releaseDescription = 'Media2 extension for ExoPlayer.'
 }
 apply from: '../../publish.gradle'
+repositories {
+    mavenCentral()
+}

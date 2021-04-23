@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 android {
     defaultConfig {
@@ -51,6 +52,8 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:' + robolectricVersion
     testImplementation project(modulePrefix + 'testutils')
     testImplementation project(modulePrefix + 'robolectricutils')
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
@@ -63,3 +66,6 @@ ext {
     releaseDescription = 'The ExoPlayer library core module.'
 }
 apply from: '../../publish.gradle'
+repositories {
+    mavenCentral()
+}

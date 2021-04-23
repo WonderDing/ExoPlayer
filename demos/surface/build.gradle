@@ -13,6 +13,7 @@
 // limitations under the License.
 apply from: '../../constants.gradle'
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion project.ext.compileSdkVersion
@@ -49,4 +50,9 @@ dependencies {
     implementation project(modulePrefix + 'library-ui')
     implementation project(modulePrefix + 'library-dash')
     implementation 'androidx.annotation:annotation:' + androidxAnnotationVersion
+    implementation "androidx.core:core-ktx:1.2.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+repositories {
+    mavenCentral()
 }

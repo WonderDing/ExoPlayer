@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.exoplayerSettingsDir/common_library_config.gradle"
+apply plugin: 'kotlin-android'
 
 dependencies {
     implementation project(modulePrefix + 'library-core')
     api 'androidx.media:media:' + androidxMediaVersion
     compileOnly 'org.checkerframework:checker-qual:' + checkerframeworkVersion
     compileOnly 'org.jetbrains.kotlin:kotlin-annotations-jvm:' + kotlinAnnotationsVersion
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 ext {
@@ -30,3 +33,6 @@ ext {
     releaseDescription = 'Media session extension for ExoPlayer.'
 }
 apply from: '../../publish.gradle'
+repositories {
+    mavenCentral()
+}
