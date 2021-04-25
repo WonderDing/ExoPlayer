@@ -6,7 +6,7 @@ import android.os.Environment
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.util.Log
+import com.google.android.exoplayer2.util.EventLogger
 import kotlinx.android.synthetic.main.activity_local_video.*
 import java.io.File
 
@@ -28,6 +28,7 @@ class LocalVideoActivity : AppCompatActivity() {
 //        Log.e("url", "mp4Uri=:$mp4Uri")
 //        val defaultRenderersFactory = DefaultRenderersFactory(this)
         player = SimpleExoPlayer.Builder(this).build()//构建播放器
+        player.addAnalyticsListener(EventLogger(null))
         spv.player = player//将player设置给StyledPlayerView
         val ivfItem = MediaItem.fromUri(ivfUri)
 //        val mediaItem = MediaItem.fromUri(mp4Uri)

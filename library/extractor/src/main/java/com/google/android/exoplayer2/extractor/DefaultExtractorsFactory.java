@@ -384,6 +384,7 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
                     : 0)));
         break;
       case FileTypes.MP4:
+        extractors.add(new IvfExtractor(ivfFlags));
         extractors.add(new FragmentedMp4Extractor(fragmentedMp4Flags));
         extractors.add(new Mp4Extractor(mp4Flags));
         break;

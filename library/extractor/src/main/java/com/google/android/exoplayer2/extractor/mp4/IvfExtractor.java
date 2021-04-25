@@ -273,7 +273,7 @@ public class IvfExtractor implements Extractor {
 
   @Override
   public boolean sniff(ExtractorInput input) throws IOException {
-    return Sniffer.sniffFragmented(input);
+    return Sniffer.sniffFragmented(input,true);
   }
 
   @Override
