@@ -350,6 +350,9 @@ public class IvfExtractor implements Extractor {
   }
 
   private boolean readAtomHeader(ExtractorInput input) throws IOException {
+    if (input.getPosition() >= input.getLength()) {
+      return false;
+    }
     if (atomHeaderBytesRead == 0) {
       // Read the standard length atom header.
       if (!input.readFully(atomHeader.getData(), 0, Atom.HEADER_SIZE, true)) {
@@ -1276,6 +1279,10 @@ public class IvfExtractor implements Extractor {
    * @throws IOException If an error occurs reading from the input.
    */
   private boolean readSample(ExtractorInput input) throws IOException {
+    if (input.getPosition() == input.getLength()) {
+      enterReadingAtomHeaderState();
+      return false;
+    }
     @Nullable TrackBundle trackBundle = currentTrackBundle;
     if (trackBundle == null) {
       trackBundle = getNextTrackBundle(trackBundles);
@@ -1392,7 +1399,11 @@ public class IvfExtractor implements Extractor {
             CeaUtil.consume(sampleTimeUs, nalBuffer, ceaTrackOutputs);
           } else {
             // Write the payload of the NAL unit.
-            writtenBytes = output.sampleData(input, sampleCurrentNalBytesRemaining, false);
+            if (input.getPosition() == input.getLength()) {
+              enterReadingAtomHeaderState();
+              return false;
+            }
+            writtenBytes = output.sampleData(input, sampleCurrentNalBytesRemaining, true);
           }
           sampleBytesWritten += writtenBytes;
           sampleCurrentNalBytesRemaining -= writtenBytes;
@@ -1400,7 +1411,11 @@ public class IvfExtractor implements Extractor {
       }
     } else {
       while (sampleBytesWritten < sampleSize) {
-        int writtenBytes = output.sampleData(input, sampleSize - sampleBytesWritten, false);
+        if (input.getPosition() == input.getLength()) {
+          enterReadingAtomHeaderState();
+          return false;
+        }
+        int writtenBytes = output.sampleData(input, sampleSize - sampleBytesWritten, true);
         sampleBytesWritten += writtenBytes;
       }
     }
