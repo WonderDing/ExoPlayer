@@ -25,7 +25,7 @@ dependencies {
     compileOnly 'org.jetbrains.kotlin:kotlin-annotations-jvm:' + kotlinAnnotationsVersion
     testImplementation project(modulePrefix + 'testutils')
     testImplementation 'org.robolectric:robolectric:' + robolectricVersion
-    implementation "androidx.core:core-ktx:+"
+    implementation 'androidx.core:core-ktx:1.2.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 

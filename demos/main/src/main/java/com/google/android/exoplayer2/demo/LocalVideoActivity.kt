@@ -1,5 +1,6 @@
 package com.google.android.exoplayer2.demo
 
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -48,13 +49,14 @@ class LocalVideoActivity : AppCompatActivity() {
             DataSpec.Builder().setUri(dataSpec.uri).setPosition(dataSpec.position).setLength(14477731).build()
         }
         val mds1 = ProgressiveMediaSource.Factory(
-            ResolvingDataSource.Factory(FileDataSource.Factory(),
+            ResolvingDataSource.Factory(
+                FileDataSource.Factory(),
                 resolver
             )
         ).createMediaSource(ivfItem)
         val resolver1 = ResolvingDataSource.Resolver { dataSpec ->
             DataSpec.Builder().setUri(dataSpec.uri)
-                .setPosition(dataSpec.position + 14478987)/*.setUriPositionOffset(14478987)*/
+                .setPosition(dataSpec.position + 14478987)
                 .setLength(438760).build()
         }
         val mds2 = ProgressiveMediaSource.Factory(
@@ -65,32 +67,34 @@ class LocalVideoActivity : AppCompatActivity() {
         ).createMediaSource(ivfItem)
         val resolver2 = ResolvingDataSource.Resolver { dataSpec ->
             DataSpec.Builder().setUri(dataSpec.uri)
-                .setPosition(dataSpec.position + 14917747)/*.setUriPositionOffset(14917747)*/
+                .setPosition(dataSpec.position + 14917747)
                 .setLength(16026394).build()
         }
         val mds3 = ProgressiveMediaSource.Factory(
-            ResolvingDataSource.Factory(FileDataSource.Factory(),
+            ResolvingDataSource.Factory(
+                FileDataSource.Factory(),
                 resolver2
             )
         ).createMediaSource(ivfItem)
         val resolver3 = ResolvingDataSource.Resolver { dataSpec ->
             DataSpec.Builder().setUri(dataSpec.uri)
-                .setPosition(dataSpec.position + 30944141)/*.setUriPositionOffset(30944141)*/
+                .setPosition(dataSpec.position + 30944141)
                 .setLength(4493772).build()
         }
         val mds4 = ProgressiveMediaSource.Factory(
-            ResolvingDataSource.Factory(FileDataSource.Factory(),
+            ResolvingDataSource.Factory(
+                FileDataSource.Factory(),
                 resolver3
             )
         ).createMediaSource(ivfItem)
-        val concatenatingMediaSource = ConcatenatingMediaSource(mds1, mds2, mds3, mds4)
+        val concatenatingMediaSource = ConcatenatingMediaSource(mds1, mds2, mds4, mds2, mds1, mds1)
 //        val mediaItem = MediaItem.fromUri(mp4Uri)
 //        val secondItem = MediaItem.fromUri(secondUri)//通过uri生成 MediaItem
 //        player.addMediaItem(ivfItem)
 //        player.addMediaItem(mediaItem)
 //        player.addMediaItem(secondItem)
 //        player.setVideoSurfaceView(sv)
-          player.addMediaSource(concatenatingMediaSource)
+        player.addMediaSource(concatenatingMediaSource)
 //        player.addMediaSource(mds1)
 //        player.addMediaSource(mds2)
 //        player.addMediaSource(mds3)
@@ -102,17 +106,37 @@ class LocalVideoActivity : AppCompatActivity() {
         debugViewHelper = DebugTextViewHelper(player, debug_text_view)
         debugViewHelper?.start()
         iv_one.setOnClickListener {/*seek to 14917747*/
-//            player.addMediaItem(ivfItem)
+            player.addMediaSource(mds3)
             player.prepare()
-//            player.createMessage(PlayerMessage.Target()).send()
-//            player.play()
         }
+        val extraInfoParser = ExtraInfoParser()
+        val extraInfoParser2 = ExtraInfoParser()
+
+        val dataSpec1 = DataSpec.Builder().setUri(ivfUri).setPosition(35536708).setLength(23548).build()
+        val dataSpec2 = DataSpec.Builder().setUri(ivfUri).setPosition(35437913).setLength(98795).build()
+//        Thread(Runnable {
+//            extraInfoParser.open(dataSpec)
+//            val readBytes = extraInfoParser.readBytes(dataSpec)
+//            val bitmap = BitmapFactory.decodeByteArray(readBytes, 0, dataSpec.length.toInt())
+//        }).start()
+        extraInfoParser.open(dataSpec1)
+
+        extraInfoParser2.open(dataSpec2)
+        val readBytes = extraInfoParser.readBytes(dataSpec1)
+        val readBytes2 = extraInfoParser2.readBytes(dataSpec2)
+        val bitmap = BitmapFactory.decodeByteArray(readBytes, 0, dataSpec1.length.toInt())
+        val bitmap2 = BitmapFactory.decodeByteArray(readBytes2, 0, dataSpec2.length.toInt())
+        iv_one.setImageBitmap(bitmap)
+        iv_two.setImageBitmap(bitmap2)
+
+//        Glide.with(this).load(readBytes).into(iv_one)
         iv_two.setOnClickListener { /*seek to 30944141*/ }
         player.addAnalyticsListener(object : AnalyticsListener {
             override fun onPositionDiscontinuity(eventTime: AnalyticsListener.EventTime, reason: Int) {
-                Log.d("TAG", eventTime.toString()+"reason="+reason)
+                Log.d("TAG", eventTime.toString() + "reason=" + reason)
             }
         })
+
     }
 
     override fun onDestroy() {
