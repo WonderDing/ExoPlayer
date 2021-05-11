@@ -273,7 +273,7 @@ public class FragmentedMp4Extractor implements Extractor {
 
   @Override
   public boolean sniff(ExtractorInput input) throws IOException {
-    return Sniffer.sniffFragmented(input,false);
+    return Sniffer.sniffFragmented(input);
   }
 
   @Override

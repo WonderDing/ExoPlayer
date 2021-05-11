@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.exoplayer2.extractor.mp4
+package com.google.android.exoplayer2.extractor.ivf
 
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.extractor.ExtractorInput
@@ -25,7 +25,7 @@ import java.io.IOException
  * appears to be in MP4 format.
  */
 /* package */
-internal object Sniffer {
+internal object IVFSniffer {
     /** Brand stored in the ftyp atom for QuickTime media.  */
     const val BRAND_QUICKTIME = 0x71742020
 
@@ -76,8 +76,8 @@ internal object Sniffer {
      */
     @JvmStatic
     @Throws(IOException::class)
-    fun sniffFragmented(input: ExtractorInput, ivf: Boolean = false): Boolean {
-        return sniffInternal(input, fragmented = true, acceptHeic = false, ivf = ivf)
+    fun sniffFragmented(input: ExtractorInput): Boolean {
+        return sniffInternal(input, fragmented = true, acceptHeic = false)
     }
 
     /**
@@ -112,8 +112,7 @@ internal object Sniffer {
     private fun sniffInternal(
         input: ExtractorInput,
         fragmented: Boolean,
-        acceptHeic: Boolean,
-        ivf: Boolean = false
+        acceptHeic: Boolean
     ): Boolean {
         val inputLength = input.length
         var bytesToSearch =
@@ -153,7 +152,7 @@ internal object Sniffer {
                 return false
             }
             bytesSearched += headerSize
-            if (atomType == Atom.TYPE_ivfh && ivf) {
+            if (atomType == Atom.TYPE_ivfh) {
                 return true
             }
             if (atomType == Atom.TYPE_moov) {
@@ -205,6 +204,9 @@ internal object Sniffer {
             }
         }
         return foundGoodFileType && fragmented == isFragmented
+    }
+    private fun parseIVFH(){
+
     }
 
     /**

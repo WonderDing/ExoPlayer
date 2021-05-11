@@ -396,8 +396,7 @@ import java.util.List;
 
   @SuppressWarnings("ConstantCaseForConstants")
   public static final int TYPE_twos = 0x74776f73;
-  @SuppressWarnings("ConstantCaseForConstants")
-  public static final int TYPE_ivfh = 0x69766668;
+
 
   public final int type;
 

@@ -6,9 +6,12 @@ import android.os.Bundle
 import android.os.Environment
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.analytics.AnalyticsListener
+import com.google.android.exoplayer2.extractor.ivf.IVFExtractorsFactory
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.DebugTextViewHelper
 import com.google.android.exoplayer2.upstream.DataSpec
@@ -39,9 +42,7 @@ class LocalVideoActivity : AppCompatActivity() {
         val ivfUri =
             Uri.parse(Environment.getExternalStorageDirectory().absolutePath + File.separator + "demo2v2.ivf.mp4")
         Log.e("url", "mp4Uri=:$ivfUri")
-//        val defaultRenderersFactory = DefaultRenderersFactory(this)
-        player = SimpleExoPlayer.Builder(this).build()//构建播放器
-        player2 = SimpleExoPlayer.Builder(this).build()//构建播放器
+        player = SimpleExoPlayer.Builder(this).setMediaSourceFactory(DefaultMediaSourceFactory(this,IVFExtractorsFactory())).build()//构建播放器
         player.addAnalyticsListener(EventLogger(null))
         spv.player = player//将player设置给StyledPlayerView
         val ivfItem = MediaItem.fromUri(ivfUri)
@@ -88,17 +89,11 @@ class LocalVideoActivity : AppCompatActivity() {
             )
         ).createMediaSource(ivfItem)
         val concatenatingMediaSource = ConcatenatingMediaSource(mds1, mds2, mds4, mds2, mds1, mds1)
-//        val mediaItem = MediaItem.fromUri(mp4Uri)
-//        val secondItem = MediaItem.fromUri(secondUri)//通过uri生成 MediaItem
-//        player.addMediaItem(ivfItem)
-//        player.addMediaItem(mediaItem)
-//        player.addMediaItem(secondItem)
-//        player.setVideoSurfaceView(sv)
-        player.addMediaSource(concatenatingMediaSource)
-//        player.addMediaSource(mds1)
-//        player.addMediaSource(mds2)
-//        player.addMediaSource(mds3)
-//        player.addMediaSource(mds4)
+//        player.addMediaSource(concatenatingMediaSource)
+        player.addMediaSource(mds1)
+        player.addMediaSource(mds3)
+        player.addMediaSource(mds4)
+        player.addMediaSource(mds2)
         player.prepare()
 //        player.seekToDefaultPosition(1)
         player.play()//播放
@@ -109,16 +104,17 @@ class LocalVideoActivity : AppCompatActivity() {
             player.addMediaSource(mds3)
             player.prepare()
         }
-        val extraInfoParser = ExtraInfoParser()
-        val extraInfoParser2 = ExtraInfoParser()
+        player.addListener(object : Player.EventListener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
+            }
+        })
+        val extraInfoParser = ExtraInfoDataSource()
+        val extraInfoParser2 = ExtraInfoDataSource()
 
         val dataSpec1 = DataSpec.Builder().setUri(ivfUri).setPosition(35536708).setLength(23548).build()
         val dataSpec2 = DataSpec.Builder().setUri(ivfUri).setPosition(35437913).setLength(98795).build()
-//        Thread(Runnable {
-//            extraInfoParser.open(dataSpec)
-//            val readBytes = extraInfoParser.readBytes(dataSpec)
-//            val bitmap = BitmapFactory.decodeByteArray(readBytes, 0, dataSpec.length.toInt())
-//        }).start()
+
         extraInfoParser.open(dataSpec1)
 
         extraInfoParser2.open(dataSpec2)
@@ -128,8 +124,6 @@ class LocalVideoActivity : AppCompatActivity() {
         val bitmap2 = BitmapFactory.decodeByteArray(readBytes2, 0, dataSpec2.length.toInt())
         iv_one.setImageBitmap(bitmap)
         iv_two.setImageBitmap(bitmap2)
-
-//        Glide.with(this).load(readBytes).into(iv_one)
         iv_two.setOnClickListener { /*seek to 30944141*/ }
         player.addAnalyticsListener(object : AnalyticsListener {
             override fun onPositionDiscontinuity(eventTime: AnalyticsListener.EventTime, reason: Int) {

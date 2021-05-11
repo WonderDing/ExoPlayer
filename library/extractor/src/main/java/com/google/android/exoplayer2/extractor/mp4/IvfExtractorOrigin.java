@@ -65,11 +65,11 @@ import java.util.UUID;
 
 /** Extracts data from the FMP4 container format. */
 @SuppressWarnings("ConstantField")
-public class IvfExtractor implements Extractor {
+public class IvfExtractorOrigin implements Extractor {
 
-  /** Factory for {@link IvfExtractor} instances. */
+  /** Factory for {@link IvfExtractorOrigin} instances. */
   public static final ExtractorsFactory FACTORY =
-      () -> new Extractor[] {new IvfExtractor()};
+      () -> new Extractor[] {new IvfExtractorOrigin()};
 
   /**
    * Flags controlling the behavior of the extractor. Possible flag values are {@link
@@ -178,14 +178,14 @@ public class IvfExtractor implements Extractor {
   // Whether extractorOutput.seekMap has been called.
   private boolean haveOutputSeekMap;
 
-  public IvfExtractor() {
+  public IvfExtractorOrigin() {
     this(0);
   }
 
   /**
    * @param flags Flags that control the extractor's behavior.
    */
-  public IvfExtractor(@Flags int flags) {
+  public IvfExtractorOrigin(@Flags int flags) {
     this(flags, /* timestampAdjuster= */ null);
   }
 
@@ -193,7 +193,7 @@ public class IvfExtractor implements Extractor {
    * @param flags Flags that control the extractor's behavior.
    * @param timestampAdjuster Adjusts sample timestamps. May be null if no adjustment is needed.
    */
-  public IvfExtractor(@Flags int flags, @Nullable TimestampAdjuster timestampAdjuster) {
+  public IvfExtractorOrigin(@Flags int flags, @Nullable TimestampAdjuster timestampAdjuster) {
     this(flags, timestampAdjuster, /* sideloadedTrack= */ null, Collections.emptyList());
   }
 
@@ -203,7 +203,7 @@ public class IvfExtractor implements Extractor {
    * @param sideloadedTrack Sideloaded track information, in the case that the extractor will not
    *     receive a moov box in the input data. Null if a moov box is expected.
    */
-  public IvfExtractor(
+  public IvfExtractorOrigin(
       @Flags int flags,
       @Nullable TimestampAdjuster timestampAdjuster,
       @Nullable Track sideloadedTrack) {
@@ -218,7 +218,7 @@ public class IvfExtractor implements Extractor {
    * @param closedCaptionFormats For tracks that contain SEI messages, the formats of the closed
    *     caption channels to expose.
    */
-  public IvfExtractor(
+  public IvfExtractorOrigin(
       @Flags int flags,
       @Nullable TimestampAdjuster timestampAdjuster,
       @Nullable Track sideloadedTrack,
@@ -242,7 +242,7 @@ public class IvfExtractor implements Extractor {
    *     targeting the player, even if {@link #FLAG_ENABLE_EMSG_TRACK} is not set. Null if special
    *     handling of emsg messages for players is not required.
    */
-  public IvfExtractor(
+  public IvfExtractorOrigin(
       @Flags int flags,
       @Nullable TimestampAdjuster timestampAdjuster,
       @Nullable Track sideloadedTrack,
@@ -273,7 +273,7 @@ public class IvfExtractor implements Extractor {
 
   @Override
   public boolean sniff(ExtractorInput input) throws IOException {
-    return Sniffer.sniffFragmented(input,true);
+    return Sniffer.sniffFragmented(input);
   }
 
   @Override

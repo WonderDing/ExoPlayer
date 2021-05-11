@@ -88,6 +88,7 @@ public final class MimeTypes {
 
   public static final String TEXT_VTT = BASE_TYPE_TEXT + "/vtt";
   public static final String TEXT_SSA = BASE_TYPE_TEXT + "/x-ssa";
+  public static final String TEXT_JS = BASE_TYPE_TEXT + "/javascript";
 
   public static final String APPLICATION_MP4 = BASE_TYPE_APPLICATION + "/mp4";
   public static final String APPLICATION_WEBM = BASE_TYPE_APPLICATION + "/webm";
@@ -113,8 +114,10 @@ public final class MimeTypes {
   public static final String APPLICATION_EXIF = BASE_TYPE_APPLICATION + "/x-exif";
   public static final String APPLICATION_ICY = BASE_TYPE_APPLICATION + "/x-icy";
   public static final String APPLICATION_AIT = BASE_TYPE_APPLICATION + "/vnd.dvb.ait";
+  public static final String APPLICATION_JSON = BASE_TYPE_APPLICATION + "/json";
 
   public static final String IMAGE_JPEG = BASE_TYPE_IMAGE + "/jpeg";
+  public static final String IMAGE_PNG = BASE_TYPE_IMAGE + "/png";
 
   private static final ArrayList<CustomMimeType> customMimeTypes = new ArrayList<>();
 

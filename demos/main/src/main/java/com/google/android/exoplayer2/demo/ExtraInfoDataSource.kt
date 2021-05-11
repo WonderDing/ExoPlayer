@@ -31,19 +31,19 @@ import java.io.RandomAccessFile
 import kotlin.math.min
 
 /** A [DataSource] for reading local files.  */
-class ExtraInfoParser : BaseDataSource( /* isNetwork= */false) {
-    /** Thrown when a [ExtraInfoParser] encounters an error reading a file.  */
+class ExtraInfoDataSource : BaseDataSource( /* isNetwork= */false) {
+    /** Thrown when a [ExtraInfoDataSource] encounters an error reading a file.  */
     class FileDataSourceException : IOException {
         constructor(cause: IOException?) : super(cause) {}
         constructor(message: String?, cause: IOException?) : super(message, cause) {}
     }
 
-    /** [DataSource.Factory] for [ExtraInfoParser] instances.  */
+    /** [DataSource.Factory] for [ExtraInfoDataSource] instances.  */
     class Factory : DataSource.Factory {
         private var listener: TransferListener? = null
 
         /**
-         * Sets a [TransferListener] for [ExtraInfoParser] instances created by this factory.
+         * Sets a [TransferListener] for [ExtraInfoDataSource] instances created by this factory.
          *
          * @param listener The [TransferListener].
          * @return This factory.
@@ -53,8 +53,8 @@ class ExtraInfoParser : BaseDataSource( /* isNetwork= */false) {
             return this
         }
 
-        override fun createDataSource(): ExtraInfoParser {
-            val dataSource = ExtraInfoParser()
+        override fun createDataSource(): ExtraInfoDataSource {
+            val dataSource = ExtraInfoDataSource()
             if (listener != null) {
                 dataSource.addTransferListener(listener!!)
             }
