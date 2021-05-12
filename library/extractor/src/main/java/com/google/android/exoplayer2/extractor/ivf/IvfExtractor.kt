@@ -199,7 +199,7 @@ class IvfExtractor @JvmOverloads constructor(
             // work out its size even if the input length is unknown.
             var endPosition = input.length
             if (endPosition == C.LENGTH_UNSET.toLong() && !containerAtoms.isEmpty()) {
-                endPosition = containerAtoms.peek().endPosition
+                endPosition = containerAtoms.peek()?.endPosition ?: 0
             }
             if (endPosition != C.LENGTH_UNSET.toLong()) {
                 atomSize = endPosition - input.position + atomHeaderBytesRead
@@ -208,8 +208,7 @@ class IvfExtractor @JvmOverloads constructor(
         if (atomSize < atomHeaderBytesRead) {
             throw ParserException("Atom size less than header length (unsupported).")
         }
-//        if (atomType == Atom.TYPE_ivfh) {
-//        }
+
         val atomPosition = input.position - atomHeaderBytesRead
         if (atomType == Atom.TYPE_moof || atomType == Atom.TYPE_mdat) {
             if (!haveOutputSeekMap) {
@@ -279,7 +278,7 @@ class IvfExtractor @JvmOverloads constructor(
 
     @Throws(ParserException::class)
     private fun processAtomEnded(atomEndPosition: Long) {
-        while (!containerAtoms.isEmpty() && containerAtoms.peek().endPosition == atomEndPosition) {
+        while (!containerAtoms.isEmpty() && containerAtoms.peek()?.endPosition == atomEndPosition) {
             onContainerAtomRead(containerAtoms.pop())
         }
         enterReadingAtomHeaderState()
@@ -288,7 +287,7 @@ class IvfExtractor @JvmOverloads constructor(
     @Throws(ParserException::class)
     private fun onLeafAtomRead(leaf: Atom.LeafAtom, inputPosition: Long) {
         if (!containerAtoms.isEmpty()) {
-            containerAtoms.peek().add(leaf)
+            containerAtoms.peek()?.add(leaf)
         } else if (leaf.type == Atom.TYPE_sidx) {
             val result = parseSidx(leaf.data, inputPosition)
             segmentIndexEarliestPresentationTimeUs = result.first
@@ -306,7 +305,7 @@ class IvfExtractor @JvmOverloads constructor(
         } else if (container.type == Atom.TYPE_moof) {
             onMoofContainerAtomRead(container)
         } else if (!containerAtoms.isEmpty()) {
-            containerAtoms.peek().add(container)
+            containerAtoms.peek()?.add(container)
         }
     }
 
@@ -406,7 +405,8 @@ class IvfExtractor @JvmOverloads constructor(
             (emsgTrackOutputs as Array<TrackOutput?>)[emsgTrackOutputCount++] = additionalEmsgTrackOutput
         }
         if (flags and FLAG_ENABLE_EMSG_TRACK != 0) {
-            (emsgTrackOutputs as Array<TrackOutput?>)[emsgTrackOutputCount++] = extractorOutput.track(nextExtraTrackId++, C.TRACK_TYPE_METADATA)
+            (emsgTrackOutputs as Array<TrackOutput?>)[emsgTrackOutputCount++] =
+                extractorOutput.track(nextExtraTrackId++, C.TRACK_TYPE_METADATA)
         }
         emsgTrackOutputs = Util.nullSafeArrayCopy(emsgTrackOutputs as Array<out TrackOutput>, emsgTrackOutputCount)
         for (eventMessageTrackOutput in emsgTrackOutputs) {
@@ -649,7 +649,11 @@ class IvfExtractor @JvmOverloads constructor(
                         // If the format is H.265/HEVC the NAL unit header has two bytes so skip one more byte.
                         nalBuffer.position = if (MimeTypes.VIDEO_H265 == track.format.sampleMimeType) 1 else 0
                         nalBuffer.setLimit(unescapedLength)
-                        CeaUtil.consume(sampleTimeUs, nalBuffer, ceaTrackOutputs as? Array<out TrackOutput>?:return false)
+                        CeaUtil.consume(
+                            sampleTimeUs,
+                            nalBuffer,
+                            ceaTrackOutputs as? Array<out TrackOutput> ?: return false
+                        )
                     } else {
                         // Write the payload of the NAL unit.
                         if (input.position == input.length) {
@@ -915,7 +919,8 @@ class IvfExtractor @JvmOverloads constructor(
                 scratch.reset(subsampleDataLength)
                 val scratchData = scratch.data
                 subsampleEncryptionData.readBytes(scratchData,  /* offset= */0, subsampleDataLength)
-                val clearDataSize: Int = (scratchData[2] and 0xFF.toByte()).toInt() shl 8 or (scratchData[3] and 0xFF.toByte()).toInt()
+                val clearDataSize: Int =
+                    (scratchData[2] and 0xFF.toByte()).toInt() shl 8 or (scratchData[3] and 0xFF.toByte()).toInt()
                 val adjustedClearDataSize = clearDataSize + clearHeaderSize
                 scratchData[2] = (adjustedClearDataSize shr 8 and 0xFF).toByte()
                 scratchData[3] = (adjustedClearDataSize and 0xFF).toByte()

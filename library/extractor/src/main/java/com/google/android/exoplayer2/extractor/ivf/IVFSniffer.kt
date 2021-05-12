@@ -16,9 +16,12 @@
 package com.google.android.exoplayer2.extractor.ivf
 
 import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.ParserException
 import com.google.android.exoplayer2.extractor.ExtractorInput
+import com.google.android.exoplayer2.extractor.ivf.bean.*
 import com.google.android.exoplayer2.util.ParsableByteArray
 import java.io.IOException
+import java.util.*
 
 /**
  * Provides methods that peek data from an [ExtractorInput] and return whether the input
@@ -119,11 +122,9 @@ internal object IVFSniffer {
             (if (inputLength == C.LENGTH_UNSET.toLong() || inputLength > SEARCH_LENGTH) SEARCH_LENGTH else inputLength) as Int
         val buffer = ParsableByteArray(64)
         var bytesSearched = 0
-        var foundGoodFileType = false
-        var isFragmented = false
         while (bytesSearched < bytesToSearch) {
             // Read an atom header.
-            var headerSize = Atom.HEADER_SIZE
+            var headerSize = Atom.FULL_HEADER_SIZE
             buffer.reset(headerSize)
             val success = input.peekFully(buffer.data, 0, headerSize,  /* allowEndOfInput= */true)
             if (!success) {
@@ -136,7 +137,7 @@ internal object IVFSniffer {
                 // Read the large atom size.
                 headerSize = Atom.LONG_HEADER_SIZE
                 input.peekFully(
-                    buffer.data, Atom.HEADER_SIZE, Atom.LONG_HEADER_SIZE - Atom.HEADER_SIZE
+                    buffer.data, Atom.FULL_HEADER_SIZE, Atom.LONG_HEADER_SIZE - Atom.FULL_HEADER_SIZE
                 )
                 buffer.setLimit(Atom.LONG_HEADER_SIZE)
                 atomSize = buffer.readLong()
@@ -153,60 +154,258 @@ internal object IVFSniffer {
             }
             bytesSearched += headerSize
             if (atomType == Atom.TYPE_ivfh) {
+                parseIVFH(input)
                 return true
             }
-            if (atomType == Atom.TYPE_moov) {
-                // We have seen the moov atom. We increase the search size to make sure we don't miss an
-                // mvex atom because the moov's size exceeds the search length.
-                bytesToSearch += atomSize.toInt()
-                if (inputLength != C.LENGTH_UNSET.toLong() && bytesToSearch > inputLength) {
-                    // Make sure we don't exceed the file size.
-                    bytesToSearch = inputLength.toInt()
+        }
+        return false
+    }
+
+    private fun parseIVFH(input: ExtractorInput) {
+        enterReadingAtomHeaderState()
+        while (true) {
+            when (parserState) {
+                STATE_READING_ATOM_HEADER -> if (!readAtomHeader(input)) {
+                    break
                 }
-                // Check for an mvex atom inside the moov atom to identify whether the file is fragmented.
-                continue
-            }
-            if (atomType == Atom.TYPE_moof || atomType == Atom.TYPE_mvex) {
-                // The movie is fragmented. Stop searching as we must have read any ftyp atom already.
-                isFragmented = true
-                break
-            }
-            if (bytesSearched + atomSize - headerSize >= bytesToSearch) {
-                // Stop searching as peeking this atom would exceed the search limit.
-                break
-            }
-            val atomDataSize = (atomSize - headerSize).toInt()
-            bytesSearched += atomDataSize
-            if (atomType == Atom.TYPE_ftyp) {
-                // Parse the atom and check the file type/brand is compatible with the extractors.
-                if (atomDataSize < 8) {
-                    return false
-                }
-                buffer.reset(atomDataSize)
-                input.peekFully(buffer.data, 0, atomDataSize)
-                val brandsCount = atomDataSize / 4
-                for (i in 0 until brandsCount) {
-                    if (i == 1) {
-                        // This index refers to the minorVersion, not a brand, so skip it.
-                        buffer.skipBytes(4)
-                    } else if (isCompatibleBrand(buffer.readInt(), acceptHeic)) {
-                        foundGoodFileType = true
-                        break
-                    }
-                }
-                if (!foundGoodFileType) {
-                    // The types were not compatible and there is only one ftyp atom, so reject the file.
-                    return false
-                }
-            } else if (atomDataSize != 0) {
-                // Skip the atom.
-                input.advancePeekPosition(atomDataSize)
+                STATE_READING_ATOM_PAYLOAD -> readAtomPayload(input)
             }
         }
-        return foundGoodFileType && fragmented == isFragmented
     }
-    private fun parseIVFH(){
 
+    // Parser states.
+    private const val STATE_READING_ATOM_HEADER = 0
+    private const val STATE_READING_ATOM_PAYLOAD = 1
+    private const val STATE_READING_END = 2
+    private var parserState = 0
+    private var atomType = 0
+    private var atomSize: Long = 0
+    private var atomHeaderBytesRead = 0
+    private var atomData: ParsableByteArray? = null
+    private val atomHeader: ParsableByteArray = ParsableByteArray(Atom.LONG_HEADER_SIZE)
+    private val containerAtoms: ArrayDeque<Atom.ContainerAtom> = ArrayDeque()
+
+    @Throws(IOException::class)
+    private fun readAtomHeader(input: ExtractorInput): Boolean {
+        if (input.position >= input.length) {
+            return false
+        }
+        if (atomHeaderBytesRead == 0) {
+            // Read the standard length atom header.
+            if (!input.readFully(atomHeader.data, 0, Atom.FULL_HEADER_SIZE, true)) {
+                return false
+            }
+            atomHeaderBytesRead = Atom.FULL_HEADER_SIZE
+            atomHeader.position = 0
+            atomSize = atomHeader.readUnsignedInt()
+            atomType = atomHeader.readInt()
+        }
+        if (atomSize == Atom.DEFINES_LARGE_SIZE.toLong()) {
+            // Read the large size.
+            val headerBytesRemaining = Atom.LONG_HEADER_SIZE - Atom.FULL_HEADER_SIZE
+            input.readFully(atomHeader.data, Atom.FULL_HEADER_SIZE, headerBytesRemaining)
+            atomHeaderBytesRead += headerBytesRemaining
+            atomSize = atomHeader.readUnsignedLongToLong()
+        } else if (atomSize == Atom.EXTENDS_TO_END_SIZE.toLong()) {
+            // The atom extends to the end of the file. Note that if the atom is within a container we can
+            // work out its size even if the input length is unknown.
+            var endPosition = input.length
+            if (endPosition == C.LENGTH_UNSET.toLong() && !containerAtoms.isEmpty()) {
+                endPosition = containerAtoms.peek()?.endPosition ?: 0
+            }
+            if (endPosition != C.LENGTH_UNSET.toLong()) {
+                atomSize = endPosition - input.position + atomHeaderBytesRead
+            }
+        }
+        if (atomSize < atomHeaderBytesRead) {
+            throw ParserException("Atom size less than header length (unsupported).")
+        }
+        val atomPosition = input.position - atomHeaderBytesRead
+
+        if (atomType == Atom.TYPE_ivfh) {
+            val endPosition = input.position + atomSize - Atom.FULL_HEADER_SIZE
+            containerAtoms.push(Atom.ContainerAtom(atomType, endPosition))
+            if (atomSize == atomHeaderBytesRead.toLong()) {
+                processAtomEnded(endPosition)
+            } else {
+                // Start reading the first child atom.
+                enterReadingAtomHeaderState()
+            }
+        } else if (shouldParseLeafAtom(atomType)) {
+            if (atomHeaderBytesRead != Atom.FULL_HEADER_SIZE) {
+                throw ParserException("Leaf atom defines extended atom size (unsupported).")
+            }
+            if (atomSize > Int.MAX_VALUE) {
+                throw ParserException("Leaf atom with length > 2147483647 (unsupported).")
+            }
+            val atomData = ParsableByteArray(atomSize.toInt())
+            System.arraycopy(atomHeader.data, 0, atomData.data, 0, Atom.FULL_HEADER_SIZE)
+            this.atomData = atomData
+            parserState = STATE_READING_ATOM_PAYLOAD
+        } else {
+            if (atomSize > Int.MAX_VALUE) {
+                throw ParserException("Skipping atom with length > 2147483647 (unsupported).")
+            }
+            atomData = null
+            parserState = STATE_READING_ATOM_PAYLOAD
+        }
+        return true
+    }
+
+    @Throws(ParserException::class)
+    private fun processAtomEnded(atomEndPosition: Long) {
+        while (!containerAtoms.isEmpty() && containerAtoms.peek()?.endPosition == atomEndPosition) {
+            onContainerAtomRead(containerAtoms.pop())
+        }
+        enterReadingAtomHeaderState()
+    }
+
+    @Throws(ParserException::class)
+    private fun onLeafAtomRead(leaf: Atom.LeafAtom, inputPosition: Long) {
+        if (!containerAtoms.isEmpty()) {
+            containerAtoms.peek()?.add(leaf)
+        }
+    }
+
+    private var iflt: IVFFileLookupTableBox? = null
+    private var ivfi: IVFInitBox? = null
+    private var ivfm: IVFMetaBox? = null
+    private val idfiList: ArrayList<IVFDataFileIndexBox> = ArrayList()
+    private val imfiList: ArrayList<IVFMediaFileIndexBox> = ArrayList()
+
+    @Throws(ParserException::class)
+    private fun onContainerAtomRead(container: Atom.ContainerAtom) {
+        if (container.type == Atom.TYPE_ivfh) {
+            imfiList.clear()
+            idfiList.clear()
+            ivfi = null
+            iflt = null
+            ivfm = null
+            container.leafChildren.forEach {
+                when (it.type) {
+                    Atom.TYPE_iflt -> {
+                        iflt = parseIFLT(it)
+                    }
+                    Atom.TYPE_idfi -> {
+                        idfiList.add(parseIDFI(it))
+                    }
+                    Atom.TYPE_imfi -> {
+                        imfiList.add(parseIMFI(it))
+                    }
+                    Atom.TYPE_ivfi -> {
+                        ivfi = parseIVFI(it)
+                    }
+                    Atom.TYPE_ivfm -> {
+                        ivfm = parseIVFM(it)
+                    }
+                }
+            }
+        }
+        if (!containerAtoms.isEmpty()) {
+            containerAtoms.peek()?.add(container)
+        }
+    }
+
+    private fun parseIVFM(atom: Atom.LeafAtom): IVFMetaBox {
+        val data = atom.data
+        data.position = Atom.FULL_HEADER_SIZE
+        val ivfMetaBox = IVFMetaBox(atom.type)
+        ivfMetaBox.metaCount = data.readInt()
+        for (index in 0 until ivfMetaBox.metaCount) {
+            val key = data.readNullTerminatedString() ?: ""
+            val value = data.readNullTerminatedString() ?: ""
+            ivfMetaBox.entries[key] = value
+        }
+        return ivfMetaBox
+    }
+
+    /**
+     * 解析imfi  IVF Media File Index
+     */
+    private fun parseIMFI(atom: Atom.LeafAtom): IVFMediaFileIndexBox {
+        val data = atom.data
+        data.position = Atom.HEADER_SIZE
+        val version = Atom.parseFullAtomVersion(data.readInt())
+        val ivfMediaFileIndexBox = IVFMediaFileIndexBox(atom.type)
+        ivfMediaFileIndexBox.fileName = data.readNullTerminatedString() ?: ""
+        ivfMediaFileIndexBox.mime = data.readNullTerminatedString() ?: ""
+        ivfMediaFileIndexBox.headerIndex = data.readInt()
+        ivfMediaFileIndexBox.timeScale = data.readInt()
+        ivfMediaFileIndexBox.indexCount = data.readInt()
+        for (i in 0 until ivfMediaFileIndexBox.indexCount) {
+            val index = data.readInt()
+            val duration = if (version == 0) data.readInt().toLong() else data.readLong()
+            ivfMediaFileIndexBox.entries[index] = duration
+        }
+        return ivfMediaFileIndexBox
+
+    }
+
+    /**
+     * 解析idfi IVF Data File Index box，文件名与 IFLT 索引映射关系
+     */
+    private fun parseIDFI(atom: Atom.LeafAtom): IVFDataFileIndexBox {
+        val data = atom.data
+        data.position = Atom.FULL_HEADER_SIZE
+        val ivfDataFileIndexBox = IVFDataFileIndexBox(atom.type)
+        ivfDataFileIndexBox.fileName = data.readNullTerminatedString() ?: ""
+        ivfDataFileIndexBox.mime = data.readNullTerminatedString() ?: ""
+        ivfDataFileIndexBox.indexCount = data.readInt()
+        for (index in 0 until ivfDataFileIndexBox.indexCount) {
+            ivfDataFileIndexBox.entries.append(index, data.readInt())
+        }
+        return ivfDataFileIndexBox
+    }
+
+    /**
+     * 解析ivfi IVF Init Box
+     */
+    private fun parseIVFI(atom: Atom.LeafAtom): IVFInitBox {
+        val data = atom.data
+        data.position = Atom.FULL_HEADER_SIZE
+        val ivfInitBox = IVFInitBox(atom.type)
+        ivfInitBox.initScriptFileName = data.readNullTerminatedString() ?: ""
+        ivfInitBox.configFileName = data.readNullTerminatedString() ?: ""
+        return ivfInitBox
+    }
+
+    /**
+     * 解析iflt  IVF File Look-up Table box
+     */
+    private fun parseIFLT(atom: Atom.LeafAtom): IVFFileLookupTableBox {
+        val data = atom.data
+        data.position = Atom.HEADER_SIZE
+        val version = Atom.parseFullAtomVersion(data.readInt())
+        val ivfFileLookupTableBox = IVFFileLookupTableBox(atom.type)
+        ivfFileLookupTableBox.entryCount = data.readInt()
+        for (index in 0 until ivfFileLookupTableBox.entryCount) {
+            val offset = if (version == 0) data.readInt().toLong() else data.readLong()
+            val size = if (version == 0) data.readInt().toLong() else data.readLong()
+            ivfFileLookupTableBox.entries[offset] = size
+        }
+        return ivfFileLookupTableBox
+    }
+
+    @Throws(IOException::class)
+    private fun readAtomPayload(input: ExtractorInput) {
+        val atomPayloadSize = atomSize.toInt() - atomHeaderBytesRead
+        val atomData = atomData
+        if (atomData != null) {
+            input.readFully(atomData.data, Atom.FULL_HEADER_SIZE, atomPayloadSize)
+            onLeafAtomRead(Atom.LeafAtom(atomType, atomData), input.position)
+        } else {
+            input.skipFully(atomPayloadSize)
+        }
+        processAtomEnded(input.position)
+    }
+
+    private fun enterReadingAtomHeaderState() {
+        parserState = STATE_READING_ATOM_HEADER
+        atomHeaderBytesRead = 0
+    }
+
+    private fun shouldParseLeafAtom(atomType: Int): Boolean {
+        return atomType == Atom.TYPE_ivfi || atomType == Atom.TYPE_ivfm || atomType == Atom.TYPE_iflt || atomType == Atom.TYPE_idfi || atomType == Atom.TYPE_imfi
     }
 
     /**
